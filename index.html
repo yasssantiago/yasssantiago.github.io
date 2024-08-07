@@ -1,0 +1,281 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizador de Grade Semestral</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    .table td {
+      min-height: 80px;
+      border: 1px solid #ccc;
+    }
+
+    .disciplines {
+      display: flex;
+      align-items: center;
+    }
+
+    .droppable:hover {
+      background-color: red;
+      cursor: pointer;
+    }
+
+    .hover:hover {
+      cursor: pointer;
+    }
+
+    .scrollable-list {
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .input-line {
+      display: inline-block;
+      border: none;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        zoom: 58%;
+      }
+      .col-md-4,
+      .col-md-8 {
+        width: 90%;
+        margin-top: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <div class="col-md-8">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Horários</th>
+              <th>Seg</th>
+              <th>Ter</th>
+              <th>Qua</th>
+              <th>Qui</th>
+              <th>Sex</th>
+              <th>Sab</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <h4>Disciplinas:</h4>
+      <div class="scrollable-list">
+        <ul class="list-group" id="listGroup"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    // Discipline names array
+    const disciplineNames = [
+      "Álgebra Linear",
+      "Álgebra Vet. e Geometria Analítica",
+      "Análise e Projeto de Algoritmos",
+      "Arquitetura de Computadores",
+      "Banco de Dados I",
+      "Banco de Dados II",
+      "Cálculo I",
+      "Cálculo II",
+      "Ciência, Tecnologia e Sociedade",
+      "Circuitos Digitais",
+      "Compiladores",
+      "Direito Aplicado a Informática",
+      "Empreendedorismo",
+      "Engenharia de Software",
+      "Estágio",
+      "Estruturas de Dados",
+      "Filosofia da Educação",
+      "Gestão de Projetos",
+      "Grafos",
+      "História da Educação",
+      "Informática na Educação",
+      "Inglês",
+      "Inteligência Artificial",
+      "Interface Humano Computador",
+      "Introdução à Computação",
+      "Introdução à Matemática",
+      "Laboratório de Programação I",
+      "Laboratório de Programação II",
+      "Laboratório de Programação III",
+      "Leitura e Produção Textual",
+      "Linguagens Formais e Autômatos",
+      "Lógica e Linguagem de Programação",
+      "Metodologia da Pesquisa",
+      "Optativa I",
+      "Optativa II",
+      "Organização de Arquivos e Dados",
+      "Probabilidade e Estatística",
+      "Programação Orientada a Objeto",
+      "Projeto Integrador I",
+      "Projeto Integrador II",
+      "Redes",
+      "Segurança da Informação",
+      "Sistemas Distribuidos",
+      "Sistemas Operacionais",
+      "TCC",
+      "Teoria da Computação",
+      "Tópicos Avançados em Programação",
+      "Web Design",
+    ];
+
+    // Generate list items for each discipline
+    const listGroup = document.getElementById("listGroup");
+    disciplineNames.forEach((discipline) => {
+      const listItemContainer = document.createElement("div");
+      listItemContainer.classList.add("disciplines");
+
+      const listItem = document.createElement("li");
+      listItem.classList.add("list-group-item", "hover");
+      listItem.textContent = discipline;
+      listItem.draggable = true;
+
+      const inputElement = document.createElement("input");
+      inputElement.type = "text";
+      inputElement.classList.add("input-line");
+      inputElement.style.width = "100%";
+      inputElement.style.marginLeft = "5px";
+      inputElement.placeholder = "Anotar dias e horários da aula";
+      inputElement.onblur = salvarDadosInputInicioAula;
+
+      listItemContainer.appendChild(listItem);
+      listItemContainer.appendChild(inputElement);
+      listGroup.appendChild(listItemContainer);
+    });
+
+    // Time slots array
+    const time = [
+      "13:15 - 14:05",
+      "14:05 - 14:55",
+      "15:10 - 16:00",
+      "16:00 - 16:50",
+      "16:50 - 17:40",
+      "17:40 - 18:30",
+      "18:40 - 19:30",
+      "19:30 - 20:20",
+      "20:20 - 21:10",
+      "21:10 - 22:00",
+    ];
+
+    // Generate time slots and table cells
+    const tbody = document.querySelector("tbody");
+    time.forEach((timeSlot) => {
+      const row = document.createElement("tr");
+      const timeCell = document.createElement("td");
+      timeCell.textContent = timeSlot;
+      row.appendChild(timeCell);
+
+      for (let i = 0; i < 6; i++) {
+        const cell = document.createElement("td");
+        cell.classList.add("droppable");
+        row.appendChild(cell);
+      }
+
+      tbody.appendChild(row);
+    });
+
+    // Chame a função carregarDadosTabela() quando a página for carregada
+    document.addEventListener('DOMContentLoaded', carregarDadosTabela);
+
+    // Chame a função carregarDadosInput() quando a página for carregada
+    document.addEventListener('DOMContentLoaded', carregarDadosInput);
+
+    function salvarDadosTabela() {
+      const table = document.querySelector('.table');
+      const tableData = table.innerHTML;
+      localStorage.setItem('tabelaDados', tableData);
+    }
+
+    // Função para permitir a ação de soltar na célula
+    function allowDrop(event) {
+      event.preventDefault();
+    }
+
+    function salvarDadosInputInicioAula() {
+      const inputs = document.querySelectorAll('.input-line');
+      inputs.forEach((input) => {
+        const id = input.parentNode.querySelector('.list-group-item').innerHTML;
+        const horarioInicio = input.value;
+        localStorage.setItem(id, horarioInicio);
+      });
+    }
+
+    // Função para carregar os dados dos inputs do localStorage
+    function carregarDadosInput() {
+      const inputs = document.querySelectorAll('.input-line');
+      inputs.forEach((input) => {
+        const id = input.parentNode.querySelector('.list-group-item').innerHTML;
+        const horarioInicio = localStorage.getItem(id);
+        if (horarioInicio) {
+          input.value = horarioInicio;
+        }
+        input.addEventListener('input', salvarDadosInputInicioAula);
+      });
+    }
+
+    // Função para carregar os dados da tabela do localStorage
+    function carregarDadosTabela() {
+      const table = document.querySelector('.table');
+      const tableData = localStorage.getItem('tabelaDados');
+      if (tableData) {
+        table.innerHTML = tableData;
+      }
+      const cells = document.querySelectorAll('.droppable');
+      cells.forEach(cell => {
+        cell.addEventListener('dragover', allowDrop);
+        cell.addEventListener('drop', handleDrop);
+        cell.addEventListener('click', handleRemove);
+      });
+    }
+  
+    // Function to handle drag and drop events
+    function handleDragStart(e) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', e.target.innerHTML);
+    }
+
+    function handleDrop(e) {
+      if (e.stopPropagation) {
+        e.stopPropagation();
+      }
+      const data = e.dataTransfer.getData('text/plain');
+      e.target.innerHTML = data;
+      e.target.classList.remove('dropped');
+      salvarDadosTabela();
+      return false;
+    }
+
+    function handleRemove(e) {
+      e.target.innerHTML = '';
+      e.target.classList.add('dropped');
+      salvarDadosTabela();
+    }
+
+    // Add event listeners for drag and drop
+    const droppables = document.getElementsByClassName('droppable');
+    Array.from(droppables).forEach((droppable) => {
+      droppable.addEventListener('drop', handleDrop);
+      droppable.addEventListener('click', handleRemove);
+    });
+
+    const listItems = document.getElementsByClassName('list-group-item');
+    Array.from(listItems).forEach((item) => {
+      item.addEventListener('dragstart', handleDragStart);
+    });
+
+  </script>
+</body>
+</html>
